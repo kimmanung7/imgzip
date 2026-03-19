@@ -39,7 +39,7 @@ async def start_download(request: Request, background_tasks: BackgroundTasks):
         return {"error": "검색어를 입력해주세요"}
 
     job_id = str(uuid.uuid4())
-    jobs[job_id] = {"status": "running", "total": count, "done": 0, "zip_path": None, "error": None}
+    jobs[job_id] = {"status": "running", "total": count, "done": 0, "zip_path": None, "error": None, "query": query}
 
     background_tasks.add_task(run_download, job_id, query, count)
     return {"job_id": job_id}
@@ -59,7 +59,7 @@ async def download_zip(job_id: str):
     if not job or job["status"] != "done":
         return {"error": "아직 준비되지 않았습니다"}
     zip_path = job["zip_path"]
-    return FileResponse(zip_path, media_type="application/zip", filename=f"{job_id[:8]}_images.zip")
+    return FileResponse(zip_path, media_type="application/zip", filename=f"{job['query']}.zip")
 
 
 async def run_download(job_id: str, query: str, count: int):
