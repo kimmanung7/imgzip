@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imgzip — 이미지 다운로더</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="logo">Img<span>zip</span></div>
+    <p class="subtitle">검색어와 장수를 입력하면 이미지를 모아 ZIP으로 드려요 - imgzip.io</p>
+  </header>
+
+  <!-- 입력 폼 -->
+  <div class="card form-card">
+    <div class="field">
+      <label for="query">검색어</label>
+      <input type="text" id="query" placeholder="예: sunset, cat, minimal architecture..." autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="count">장수 <span class="hint">(최대 30장)</span></label>
+      <input type="number" id="count" value="10" min="1" max="30" />
+    </div>
+    <button id="startBtn" onclick="startDownload()">이미지 수집 시작</button>
+  </div>
+
+  <!-- 진행 상황 -->
+  <div class="card progress-card" id="progressCard" style="display:none;">
+    <div class="progress-header">
+      <span id="progressLabel">준비 중...</span>
+      <span id="progressCount" class="count-badge">0 / 0</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="preview-grid" id="previewGrid"></div>
+  </div>
+
+  <!-- 완료 -->
+  <div class="card done-card" id="doneCard" style="display:none;">
+    <div class="done-icon">✓</div>
+    <p class="done-text">수집 완료!</p>
+    <a id="downloadLink" class="download-btn" href="#">ZIP 다운로드</a>
+    <button class="reset-btn" onclick="reset()">다시 검색</button>
+  </div>
+
+  <!-- 에러 -->
+  <div class="card error-card" id="errorCard" style="display:none;">
+    <p class="error-text" id="errorText"></p>
+    <button class="reset-btn" onclick="reset()">다시 시도</button>
+  </div>
+
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
