@@ -85,7 +85,7 @@ async def run_download(job_id: str, query: str, count: int):
             return
 
         # 2. 작업 폴더 생성
-        job_dir = DOWNLOAD_DIR / job_id
+        job_dir = DOWNLOAD_DIR / query
         job_dir.mkdir(exist_ok=True)
 
         # 3. 이미지 개별 다운로드
@@ -103,7 +103,7 @@ async def run_download(job_id: str, query: str, count: int):
                 jobs[job_id]["done"] = i + 1
 
         # 4. ZIP 압축
-        zip_path = DOWNLOAD_DIR / f"{job_id}.zip"
+        zip_path = DOWNLOAD_DIR / f"{query}.zip"
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for img_file in job_dir.iterdir():
                 zf.write(img_file, img_file.name)
