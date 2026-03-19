@@ -9,6 +9,7 @@ import httpx
 import os
 import zipfile
 import uuid
+import random
 from pathlib import Path
 
 app = FastAPI(title="Imgzip")
@@ -20,7 +21,6 @@ UNSPLASH_API = "https://api.unsplash.com"
 DOWNLOAD_DIR = Path("downloads")
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 
-# job_id → { status, total, done, zip_path, error }
 jobs: dict = {}
 
 
@@ -33,7 +33,7 @@ async def index(request: Request):
 async def start_download(request: Request, background_tasks: BackgroundTasks):
     body = await request.json()
     query = body.get("query", "").strip()
-    count = min(int(body.get("count", 10)), 30)  # 최대 30장
+    count = min(int(body.get("count", 10)), 30)
 
     if not query:
         return {"error": "검색어를 입력해주세요"}
@@ -64,14 +64,29 @@ async def download_zip(job_id: str):
 
 async def run_download(job_id: str, query: str, count: int):
     try:
-        # 1. Unsplash에서 이미지 URL 목록 수집
         async with httpx.AsyncClient() as client:
+            # 1차 호출 - total_pages 파악
+            resp = await client.get(
+                f"{UNSPLASH_API}/search/photos",
+                params={
+                    "query": query,
+                    "per_page": 1,
+                    "page": 1,
+                    "client_id": UNSPLASH_ACCESS_KEY,
+                },
+                timeout=15,
+            )
+            resp.raise_for_status()
+            total_pages = resp.json().get("total_pages", 1)
+
+            # 2차 호출 - 랜덤 페이지로 실제 이미지 수집
+            random_page = random.randint(1, min(total_pages, 20))
             resp = await client.get(
                 f"{UNSPLASH_API}/search/photos",
                 params={
                     "query": query,
                     "per_page": count,
-                    "page": 1,
+                    "page": random_page,
                     "client_id": UNSPLASH_ACCESS_KEY,
                 },
                 timeout=15,
@@ -84,11 +99,9 @@ async def run_download(job_id: str, query: str, count: int):
             jobs[job_id]["error"] = "검색 결과가 없습니다"
             return
 
-        # 2. 작업 폴더 생성
         job_dir = DOWNLOAD_DIR / query
         job_dir.mkdir(exist_ok=True)
 
-        # 3. 이미지 개별 다운로드
         async with httpx.AsyncClient() as client:
             for i, photo in enumerate(results):
                 img_url = photo["urls"]["regular"]
@@ -102,13 +115,11 @@ async def run_download(job_id: str, query: str, count: int):
 
                 jobs[job_id]["done"] = i + 1
 
-        # 4. ZIP 압축
         zip_path = DOWNLOAD_DIR / f"{query}.zip"
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for img_file in job_dir.iterdir():
                 zf.write(img_file, img_file.name)
 
-        # 5. 임시 폴더 정리
         for f in job_dir.iterdir():
             f.unlink()
         job_dir.rmdir()
