@@ -178,13 +178,11 @@ async def fetch_pexels(client: httpx.AsyncClient, query: str, count: int) -> lis
 # ── 메인 다운로드 작업 ─────────────────────────────────────────────────────────
 async def run_download(job_id: str, query: str, count: int):
     try:
-        share = -(-count // 3)
-
         async with httpx.AsyncClient() as client:
             unsplash_urls, pixabay_urls, pexels_urls = await asyncio.gather(
-                fetch_unsplash(client, query, share),
-                fetch_pixabay(client, query, share),
-                fetch_pexels(client, query, share),
+                fetch_unsplash(client, query, count),
+                fetch_pixabay(client, query, count),
+                fetch_pexels(client, query, count),
             )
 
         # 합치기 → 셔플 → 중복 제거 → count장 자르기
